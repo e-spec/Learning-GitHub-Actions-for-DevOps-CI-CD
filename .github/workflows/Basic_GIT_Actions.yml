@@ -1,5 +1,6 @@
 # This workflow is a simple example of GitHub Actions
 # It shows how to run jobs on different operating systems
+# The explanation of each section is provided in the comments
 
 name: A Basic Workflow   # Name shown in the GitHub Actions UI
 
