@@ -34,4 +34,8 @@ jobs:
         with:
           name: file           # Must match the upload artifact name
 
-      # Display the contents of the downloade
+    # Print the contents of the downloaded file
+      - name: Print file content
+      run: |
+        echo "Contents of file.txt:"
+        cat file.txt
