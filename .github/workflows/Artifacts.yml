@@ -36,6 +36,6 @@ jobs:
 
     # Print the contents of the downloaded file
       - name: Print file content
-      run: |
-        echo "Contents of file.txt:"
-        cat file.txt
+        run: |
+          echo "Contents of file.txt:"
+          cat file.txt
