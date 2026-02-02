@@ -1,0 +1,20 @@
+name: GitHub Environments  # Workflow name shown in the Actions tab
+
+on:
+  workflow_dispatch:      # Allows manual execution only
+
+jobs:
+  deployment:             # Single job named "deployment".
+                          #The environment must already exist in: Repo → Settings → Environments → production
+    runs-on: ubuntu-latest  # Uses a GitHub-hosted Ubuntu runner
+
+    environment:
+      name: production     # Links this job to the "production" environment
+                          #The environment must already exist in: Repo → Settings → Environments → production
+      url: https://github.com  # Optional URL shown in the deployment UI
+
+    steps:
+      - name: Print secret from environment
+        run: |
+          # Prints an environment secret (value will be masked in logs)
+          echo "APP_SECRET: ${{ secrets.APP_SECRET }}"
