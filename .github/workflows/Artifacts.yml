@@ -1,0 +1,37 @@
+name: Artifacts Demo   # Name shown in the GitHub Actions UI
+
+on: workflow_dispatch  # Allows manual triggering from the Actions tab
+
+jobs:
+  job_1:
+    name: Upload Artifact
+    runs-on: ubuntu-latest  # GitHub-hosted Linux runner
+
+    steps:
+      # Create a file that will be shared with another job
+      - name: Create a local file
+        run: |
+          echo "Hi, I am storing this data in this file, so that I can use this in the subsequent jobs within this workflow run. I will upload this file to GitHub storage and download from there when needed in this workflow run." > file.txt
+
+      # Upload the file as an artifact to GitHub storage (v4)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: file            # Artifact name (used when downloading)
+          path: file.txt        # File to upload
+          retention-days: 10    # How long GitHub keeps the artifact
+
+
+  job_2:
+    name: Download Artifact
+    runs-on: ubuntu-latest
+    needs: job_1              # Ensures job_1 completes first
+
+    steps:
+      # Download the artifact uploaded in job_1 (v4)
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: file           # Must match the upload artifact name
+
+      # Display the contents of the downloade
