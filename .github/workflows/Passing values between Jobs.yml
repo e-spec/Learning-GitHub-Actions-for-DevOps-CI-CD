@@ -1,0 +1,32 @@
+name: 'Passing Values to Next Jobs'     # Workflow name shown in Actions UI
+
+on: workflow_dispatch                  # Manual trigger only
+
+jobs:
+  job1:
+    runs-on: windows-latest             # First job runs on a Windows runner
+
+    # Expose selected step outputs as job-level outputs
+    outputs:
+      output1: ${{ steps.step1.outputs.test }}
+      output2: ${{ steps.step2.outputs.test }}
+
+    steps:
+      # Step 1: Create a step output named "test"
+      - id: step1                       # Step ID used for output reference
+        run: echo "::set-output name=test::ImportantValue1"
+
+      # Step 2: Create another step output with the same output name
+      - id: step2
+        run: echo "::set-output name=test::ImportantValue2"
+
+  job2:
+    runs-on: ubuntu-latest              # Second job runs on Linux
+    needs: job1                         # Ensures job1 completes first
+
+    steps:
+      # Consume job outputs from job1
+      - run: |
+          echo "Printing the values"
+          echo output1: ${{ needs.job1.outputs.output1 }}
+          echo output2: ${{ needs.job1.outputs.output2 }}
