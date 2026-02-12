@@ -12,13 +12,13 @@ env:
 defaults:
   run:
     shell: bash
-    working-directory: ./WebApplication01
+    working-directory: ./WebApp01
 
 jobs:
   build:
     runs-on: ubuntu-latest  
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v2
