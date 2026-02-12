@@ -1,0 +1,33 @@
+name: Passing Values to Next Steps   # Workflow name shown in the Actions UI
+
+on: workflow_dispatch                # Manual trigger only
+
+jobs:
+  passing-values-bw-steps:           # Single job
+    runs-on: ubuntu-latest            # GitHub-hosted Linux runner
+
+    steps:
+      # Step 1: Define an environment variable for all following steps
+      - name: Set the value using ENV Vars
+        run: |
+          # Writes to GITHUB_ENV so the variable is available in later steps
+          echo "variableName=this-is-value" >> $GITHUB_ENV
+
+      # Step 2: Create step outputs that can be consumed by other steps
+      - name: Create-Variables
+        id: var_source_step            # Step ID used to reference outputs
+        run: |
+          echo "Performing a random task"
+          # Define step outputs (legacy syntax, still supported)
+          echo "::set-output name=var1_name::TechSckool"
+          echo "::set-output name=var2_date::$(date +'%Y-%m-%d-%H-%M')"
+
+      # Step 3: Read values created in previous steps
+      - name: Get-Variable-Value
+        run: |
+          echo "Printing the values"
+          # Reads environment variable set via GITHUB_ENV
+          echo variableName: ${{ env.variableName }}
+          # Reads outputs from the step with id 'var_source_step'
+          echo var1_name: ${{ steps.var_source_step.outputs.var1_name }}
+          echo var2_date: ${{ steps.var_source_step.outputs.var2_date }}
