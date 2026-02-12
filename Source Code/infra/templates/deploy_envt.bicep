@@ -42,10 +42,10 @@ resource asp 'Microsoft.Web/serverfarms@2022-03-01' = {
   location: location
   kind: 'linux'
   sku: {
-    name: 'B1'
-    tier: 'Basic'
-    size: 'B1'
-    family: 'B'
+    name: 'F1'
+    tier: 'Free'
+    size: 'F1'
+    family: 'F'
     capacity: 1
   }
 }
