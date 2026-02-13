@@ -14,3 +14,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: Azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Optional: Show working directory (debugging)
+      - name: List files
+        run: ls -R
+
+      # Validate first
+      - name: Validate Bicep
+        uses: Azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ env.resourceGroupName }}
+          template: "./Source Code/infra/templates/deploy_envt.bicep"
+          parameters: storageNamePrefix=${{ env.storageNamePrefix }}
+          deploymentMode: Validate
+
+      # Deploy
+      - name: Deploy Bicep
+        uses: Azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ env.resourceGroupName }}
+          template: "./Source Code/infra/templates/deploy_envt.bicep"
+          parameters: storageNamePrefix=${{ env.storageNamePrefix }}
+          deploymentMode: Incremental
