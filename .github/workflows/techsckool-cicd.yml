@@ -34,7 +34,7 @@ env:
 defaults:
   run:
     shell: bash
-    working-directory: ./WebApplication01
+    working-directory: ./WebApp01
 
 
 permissions:
