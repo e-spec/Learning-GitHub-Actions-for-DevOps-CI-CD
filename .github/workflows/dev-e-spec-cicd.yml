@@ -21,102 +21,84 @@ name: Techsckool-CICD
 
 on:
   workflow_dispatch:
-#   push:
-#     branches: [ "main" ]
-
 
 env:
-  AZURE_WEBAPP_NAME: dev-e-spec       # set this to the name of your Azure Web App
-  AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
-  DOTNET_VERSION: '10.0.x'                 # set this to the .NET Core version to use
-
+  AZURE_WEBAPP_NAME: dev-e-spec
+  DOTNET_VERSION: '10.0.x'
 
 defaults:
   run:
     shell: bash
-    working-directory: ./WebApplication01
-
+    working-directory: ./WebApp01
 
 permissions:
   contents: read
-
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v2
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       
-      - name: Set up dependency caching for faster builds
-        uses: actions/cache@v3
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish -c Release -o ${{ github.workspace }}/publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
-
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: dotnet-app
+          path: ${{ github.workspace }}/publish
 
   deploy-to-dev:
-    permissions:
-      contents: none
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'Development'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      name: Development
+      url: ${{ steps.deploy.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: dotnet-app
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: Deploy to Dev Web App
+        id: deploy
         uses: azure/webapps-deploy@v2
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          package: dotnet-app
 
- 
- 
   deploy-to-prod:
-    permissions:
-      contents: none
     runs-on: ubuntu-latest
     needs: deploy-to-dev
     environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      name: production
+      url: ${{ steps.deploy.outputs.webapp-url }}
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: dotnet-app
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
+      - name: Deploy to Prod Web App
+        id: deploy
         uses: azure/webapps-deploy@v2
         with:
           app-name: prod-techsckool
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          package: dotnet-app
