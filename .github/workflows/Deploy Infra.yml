@@ -30,7 +30,7 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: ${{ env.resourceGroupName }}
-          template: ./infra/templates/deploy_envt.bicep
+          template: ./infra/deploy_envt.bicep
           parameters: storageNamePrefix=${{ env.storageNamePrefix }}
           deploymentMode: Validate
 
@@ -40,6 +40,6 @@ jobs:
         with:
           subscriptionId: ${{ secrets.AZURE_SUBSCRIPTION }}
           resourceGroupName: ${{ env.resourceGroupName }}
-          template: ./infra/templates/deploy_envt.bicep
+          template: ./infra/deploy_envt.bicep
           parameters: storageNamePrefix=${{ env.storageNamePrefix }}
           deploymentMode: Incremental
