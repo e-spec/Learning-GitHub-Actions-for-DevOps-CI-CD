@@ -5,7 +5,7 @@ param acr_name string = 'techsckoolacr'
 param asb_name string = 'techsckoolasb'
 param app_name string = 'techsckoolapp'
 
-var asp_name = 'ASP-${app_name}'
+// var asp_name = 'ASP-${app_name}'
 var stgacc_name = '${storageNamePrefix}${uniqueString(resourceGroup().id)}'
 
 resource storage_account 'Microsoft.Storage/storageAccounts@2022-05-01' = {
