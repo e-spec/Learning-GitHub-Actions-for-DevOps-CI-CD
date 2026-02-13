@@ -3,7 +3,7 @@ param location string = resourceGroup().location
 param storageNamePrefix string
 param acr_name string = 'techsckoolacr'
 param asb_name string = 'techsckoolasb'
-param app_name string = 'techsckoolapp'
+// param app_name string = 'techsckoolapp'
 
 // var asp_name = 'ASP-${app_name}'
 var stgacc_name = '${storageNamePrefix}${uniqueString(resourceGroup().id)}'
