@@ -1,4 +1,4 @@
-name: Continuous Integration Demo
+name: CI Continuous Integration Demo
 
 on:
   workflow_dispatch:
