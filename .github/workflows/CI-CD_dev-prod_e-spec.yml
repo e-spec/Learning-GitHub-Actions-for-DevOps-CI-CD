@@ -17,26 +17,32 @@
 # For more information on the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # For more samples to get started with GitHub Action workflows to deploy to Azure: https://github.com/Azure/actions-workflow-samples
 
+# name of the workflow
 name: e-spec-devprod-CICD
 
+# Trigger the workflow on push to the default branch or when manually triggered
 on:
   workflow_dispatch:
 #   push:
 #     branches: [ "main" ]
 
+# Environment variables for the workflow
 env:
   AZURE_WEBAPP_NAME: dev-e-spec # set this to the name of your Azure Web App
   AZURE_WEBAPP_PACKAGE_PATH: "." # set this to the path to your web app project, defaults to the repository root
   DOTNET_VERSION: "10.0.x" # set this to the .NET Core version to use
 
+# set default shell and working directory for all steps in the workflow
 defaults:
   run:
     shell: bash
     working-directory: ./WebApp01
 
+# permissions for the workflow, set to read-only for contents to limit access to the repository
 permissions:
   contents: read
 
+# jobs define the steps to be executed in the workflow, in this case we have a build job and two deployment jobs for development and production environments
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,11 +50,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Set up .NET Core SDK for the specified version in the environment variable, allowing us to build and publish our .NET application
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v2
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Use caching to speed up the build process by caching the NuGet packages, which are restored during the build. The cache key is based on the operating system and the hash of the packages.lock.json file, ensuring that the cache is updated when dependencies change.
       - name: Set up dependency caching for faster builds
         uses: actions/cache@v3
         with:
@@ -57,33 +65,40 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      # build the .NET application in Release configuration, which compiles the code and prepares it for deployment
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
+      # Publish the .NET application to a specified output directory, which prepares the application for deployment by creating a self-contained package that can be deployed to Azure Web App
       - name: dotnet publish
         run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
+      # Upload the published application as an artifact, which allows the deployment jobs to access the built application package for deployment to Azure Web App
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
 
+  # Deploy to development environment first, and then to production environment after successful deployment to development. This allows for testing in the development environment before deploying to production, ensuring that any issues can be identified and resolved before affecting end users.
   deploy-to-dev:
     permissions:
       contents: none
     runs-on: ubuntu-latest
+    # Wait for the build job to complete successfully before starting the deployment to development environment, ensuring that the application is built and ready for deployment before attempting to deploy it to Azure Web App.
     needs: build
     environment:
       name: "Development"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
+    #Steps for deploying to the development environment, which include downloading the built application artifact and using the Azure Web Apps Deploy action to deploy the application to the specified Azure Web App using the publish profile stored in the repository secrets. The deployment step also outputs the URL of the deployed web app, which can be used in subsequent steps or jobs.
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: .net-app
 
+      #Deploy the application to Azure Web App using the Azure Web Apps Deploy action, which takes the application package and deploys it to the specified Azure Web App using the publish profile stored in the repository secrets. The deployment step also outputs the URL of the deployed web app, which can be used in subsequent steps or jobs.
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
@@ -92,6 +107,7 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
+  # Deploy to production environment after successful deployment to development environment, ensuring that the application has been tested in the development environment before being deployed to production. This job also uses the Azure Web Apps Deploy action to deploy the application to the specified Azure Web App for production, using the same publish profile stored in the repository secrets. The deployment step outputs the URL of the deployed web app, which can be used for monitoring and accessing the production environment.
   deploy-to-prod:
     permissions:
       contents: none
