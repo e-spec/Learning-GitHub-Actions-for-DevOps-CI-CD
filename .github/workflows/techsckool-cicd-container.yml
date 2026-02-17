@@ -24,28 +24,36 @@
 # For more information on the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # For more samples to get started with GitHub Action workflows to deploy to Azure: https://github.com/Azure/actions-workflow-samples
 
+# Name of the workflow
 name: TechSckool-Container-Deploy
 
+# Set the name of your Azure Web App as an environment variable
 env:
   AZURE_WEBAPP_NAME: techsckool
 
+# Controls when the workflow will run
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
 
+# Permissions for the GITHUB_TOKEN, which is used to authenticate with the GitHub API. The default permissions for GITHUB_TOKEN are read/write, but it's a best practice to limit permissions to only what is necessary for the workflow.
 permissions:
   contents: read
 
+# Jobs are a collection of steps that run on the same runner. Each job will run in parallel by default, but you can configure dependencies between jobs to control the order of execution. In this workflow, we have two jobs: "build" and "deploy". The "deploy" job depends on the "build" job, which means it will only run after the "build" job has completed successfully.
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the repository to the GitHub Actions runner. This step is necessary to access the code and Dockerfile in the repository for building the container image. The "actions/checkout" action is a commonly used action that checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it.
       - uses: actions/checkout@v4
 
+      # Buildx is a Docker CLI plugin that extends the docker command with the full support of the features provided by BuildKit builder toolkit. This step sets up Buildx on the GitHub Actions runner, which is necessary for building and pushing multi-platform Docker images. The "docker/setup-buildx-action" action is used to set up Buildx in the workflow.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Log in to Azure Container Registry (ACR) using the "docker/login-action". This step authenticates with the ACR so that the workflow can push the built Docker image to the registry. The registry URL, username, and password are provided as inputs to the action. The password is stored as a secret in the GitHub repository for security.
       - name: Log in to Azure container registry
         uses: docker/login-action@v3
         with:
@@ -53,9 +61,11 @@ jobs:
           username: de010
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      # Lowercase the repository name and username. This step converts the repository name and username to lowercase and sets it as an environment variable "REPO". This is necessary because Docker image tags must be lowercase. The "GITHUB_REPOSITORY" variable contains the repository name in the format "owner/repo", and the ",," syntax is used to convert it to lowercase.
       - name: Lowercase the repo name and username
         run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
+      # Build and push the Docker image to the Azure Container Registry. This step uses the "docker/build-push-action" to build the Docker image from the specified Dockerfile and context, and then pushes it to the registry. The image is tagged with the repository name and the commit SHA for versioning. The "push" input is set to true to enable pushing the image to the registry after building.
       - name: Build and push container image to registry
         uses: docker/build-push-action@v5
         with:
@@ -64,11 +74,13 @@ jobs:
           file: ./WebApplication02/Dockerfile
           context: .
 
+  # Deploy the container image to Azure Web App. This job runs on an Ubuntu runner and depends on the successful completion of the "build" job. It logs in to Azure using the "azure/login" action, and then deploys the Docker image to the Azure Web App using the "azure/webapps-deploy" action. The app name and image details are provided as inputs to the deployment action. The environment URL is set to the output of the deployment step, which allows for easy access to the deployed application.
   deploy:
     permissions:
       contents: none
     runs-on: ubuntu-latest
     needs: build
+    # Environments in GitHub Actions allow you to describe a deployment target, such as "Development", "Staging", or "Production". In this workflow, we define an environment named "Development" and set the URL of the deployed application as an output from the deployment step. This provides a clear context for where the application is being deployed and allows for better organization and management of deployments within GitHub Actions.
     environment:
       name: "Development"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
@@ -76,15 +88,16 @@ jobs:
       - name: Lowercase the repo name and username
         run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
 
+      # Log in to Azure using the "azure/login" action. This step authenticates with Azure using the credentials stored in the "AZURE_CREDENTIALS" secret. The credentials should be in JSON format and contain the necessary information for authentication, such as client ID, tenant ID, subscription ID, and client secret. This authentication is required to perform actions on Azure resources, such as deploying to the Web App.
       - name: Login to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Deploy the Docker image to Azure Web App using the "azure/webapps-deploy" action. This step takes the built Docker image from the Azure Container Registry and deploys it to the specified Azure Web App. The app name and image details are provided as inputs to the action. The output of this step includes the URL of the deployed web application, which is set as an environment variable for use in the workflow.
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           images: "de010.azurecr.io/${{ env.REPO }}:${{ github.sha }}"
-
