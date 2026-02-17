@@ -40,7 +40,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -52,7 +51,7 @@ jobs:
         with:
           registry: de010.azurecr.io
           username: de010
-          password: t2wv0rYfBpbZ3QJyuO1Upp0NBAaEkFg3XSG7qA0cfEpGxWTNPCy8JQQJ99CBACYeBjFEqg7NAAACAZCRLpTS
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Lowercase the repo name and username
         run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
